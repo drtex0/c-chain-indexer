@@ -9,7 +9,43 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: prisma
       MONGO_INITDB_DATABASE: blockchain-indexer
-      MONGO_REPLICA_HOST: localhost
+      MONGO_REPLICA_HOST: mongo
       MONGO_REPLICA_PORT: 27017
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/blockchain-indexer --quiet
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    networks:
+      - indexer_network
+    volumes:
+      - ./mongodb/data:/data/db
+
+  indexer:
+    build: ./apps/indexer
+    environment:
+      DATABASE_URL: mongodb://root:prisma@mongo:27017/blockchain-indexer?authSource=admin&directConnection=true
+      RPC_ENDPOINT_URL: https://avalanche-mainnet.infura.io/v3/b99c8efdbe584c6685d52b9c33719777
+    networks:
+      - indexer_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  api:
+    build: ./apps/api
+    ports:
+      - "3000:3000"
+    networks:
+      - indexer_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   mongodb_data:
+  indexer_data:
+
+networks:
+  indexer_network:
+    driver: bridge
