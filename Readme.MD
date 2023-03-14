@@ -8,9 +8,11 @@
     /indexer
       Dockerfile
 
+    /api
+      Dockerfile
+
   /mongodb
     Dockerfile
 
-  docker-compose
-
+  docker-compose.yml
 ```

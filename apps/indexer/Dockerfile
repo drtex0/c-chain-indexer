@@ -1,17 +1,32 @@
-FROM node:18
-
-RUN apt-get -qy update && apt-get -qy install openssl
+FROM node:18 as builder
 
 WORKDIR /app
-
-COPY ../../package*.json ./
-
-RUN yarn
-
+RUN yarn global add turbo
 COPY . .
+RUN turbo prune --scope=indexer --docker
 
-RUN yarn build
 
-RUN npx prisma generate
+FROM node:18 as installer
+WORKDIR /app
 
-CMD ["node", "dist/index.js" ]
+# Install scoped repo dependencies 
+COPY .gitignore .gitignore
+COPY --from=builder  /app/out/json/ .
+COPY --from=builder  /app/out/yarn.lock ./yarn.lock
+RUN yarn install
+RUN ls -l .
+
+# Build scoped repo
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+RUN yarn turbo run build --filter=indexer
+
+FROM node:18 as runner
+WORKDIR /app
+COPY --from=installer /app .
+
+RUN ls -l /app
+
+
+CMD ["node", "apps/indexer/dist/index.js" ]
+

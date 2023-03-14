@@ -22,10 +22,11 @@ services:
       - ./mongodb/data:/data/db
 
   indexer:
-    build: ./apps/indexer
+    build:
+      context: .
+      dockerfile: ./apps/indexer/Dockerfile
     environment:
       DATABASE_URL: mongodb://root:prisma@mongo:27017/blockchain-indexer?authSource=admin&directConnection=true
-      RPC_ENDPOINT_URL: https://avalanche-mainnet.infura.io/v3/b99c8efdbe584c6685d52b9c33719777
     networks:
       - indexer_network
     depends_on:
@@ -33,7 +34,9 @@ services:
         condition: service_healthy
 
   api:
-    build: ./apps/api
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
     ports:
       - "3000:3000"
     networks:
