@@ -1,0 +1,28 @@
+{
+  "name": "c-chain-indexer",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "dev": "turbo run dev",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">= 8.0.0"
+  },
+  "repository": "https://github.com/drtex0/c-chain-indexer.git",
+  "author": "0xTex <tdza@mail.co>",
+  "license": "MIT"
+}

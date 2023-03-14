@@ -1,21 +1,24 @@
-import Web3 from "web3";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const web3 = new Web3(process.env.RPC_ENDPOINT_URL!);
-
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "database";
 
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$connect();
-  const create = await prisma.blocks.create({
-    data: { blockNumber: 1 },
-  });
 
-  const lastBock = await web3.eth.getBlockNumber(); // 27352865
+  let blockNumber = 1;
+  setInterval(async () => {
+    const blockCreated = await prisma.blocks.create({
+      data: { blockNumber },
+    });
+
+    blockNumber++;
+    console.log("Mined block", blockCreated);
+  }, 1000);
+
   console.log("Db connected");
 }
 

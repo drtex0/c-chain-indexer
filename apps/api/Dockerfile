@@ -1,14 +1,27 @@
-FROM node:18
+FROM node:18 as builder
 
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN yarn
-
+RUN yarn global add turbo
 COPY . .
+RUN turbo prune --scope=api --docker  
 
-RUN yarn build
+FROM node:18 as installer
+WORKDIR /app
+
+# Install scoped repo dependencies 
+COPY .gitignore .gitignore
+COPY --from=builder  /app/out/json/ .
+COPY --from=builder  /app/out/yarn.lock ./yarn.lock
+RUN yarn install
+
+# Build scoped repo
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+RUN yarn turbo run build --filter=api
 
 
-CMD ["node", "dist/main.js" ]
+FROM node:18 as runner
+WORKDIR /app
+COPY --from=installer /app .
+
+CMD ["node", "apps/api/dist/main.js" ]
