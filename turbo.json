@@ -17,6 +17,10 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "prettier": {
+      "dependsOn": [],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
