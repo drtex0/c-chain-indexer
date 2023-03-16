@@ -1,8 +1,8 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-import { PrismaClient } from "database";
+import { PrismaClient } from 'cci-database';
 
 const prisma = new PrismaClient();
 
@@ -16,10 +16,10 @@ async function main() {
     });
 
     blockNumber++;
-    console.log("Mined block", blockCreated);
+    console.log('Mined block', blockCreated);
   }, 1000);
 
-  console.log("Db connected");
+  console.log('Db connected');
 }
 
 main()
