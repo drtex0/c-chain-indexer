@@ -1,18 +1,18 @@
-version: "3"
+version: '3'
 services:
   mongo:
     build: ./mongodb
     restart: always
     ports:
-      - "27017:27017"
+      - '27017:27017'
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: prisma
-      MONGO_INITDB_DATABASE: blockchain-indexer
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
       MONGO_REPLICA_HOST: mongo
       MONGO_REPLICA_PORT: 27017
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/blockchain-indexer --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/${MONGO_INITDB_DATABASE} --quiet
       interval: 5s
       timeout: 10s
       retries: 5
@@ -38,7 +38,7 @@ services:
       context: .
       dockerfile: ./apps/api/Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - indexer_network
     depends_on:

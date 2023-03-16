@@ -6,7 +6,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('/block-count')
-  getHello(): Promise<any> {
+  getBlocksCount(): Promise<any> {
     return this.appService.getBlocksCount();
   }
 }

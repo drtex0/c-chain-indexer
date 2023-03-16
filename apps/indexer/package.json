@@ -5,14 +5,17 @@
   "author": "0xTex <tdza@mail.co>",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prettier": "prettier --config ../../.prettierrc ./src --check"
   },
   "devDependencies": {
     "@types/node": "^18.15.1",
+    "prettier": "^2.8.4",
     "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "database": "1.0.0",
+    "cci-database": "1.0.0",
+    "cci-tsconfig": "1.0.0",
     "dotenv": "^16.0.3",
     "mongodb": "^5.1.0",
     "promise-throttle-all": "^1.1.1",
