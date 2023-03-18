@@ -9,7 +9,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
-      MONGO_REPLICA_HOST: mongo
+      MONGO_REPLICA_HOST: localhost
       MONGO_REPLICA_PORT: 27017
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/${MONGO_INITDB_DATABASE} --quiet
@@ -26,7 +26,8 @@ services:
       context: .
       dockerfile: ./apps/indexer/Dockerfile
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_REPLICA_PORT}/${MONGO_INITDB_DATABASE}?authSource=admin
+      RPC_ENDPOINT_URL: ${RPC_ENDPOINT_URL}
     networks:
       - indexer_network
     depends_on:

@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-import { run } from "./run";
+import { run } from './run';
 
 (async () => {
   run();

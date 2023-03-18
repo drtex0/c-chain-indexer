@@ -11,7 +11,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model Transaction {
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  hash        String       @unique
+  blockNumber   Int       
+  transactionIndex Int   
+  from          String
+  to            String?
+  value         String
+  computedValue Float
+  gas           Int
+  gasPrice      Float
+  blockId       String @db.ObjectId
+  block         Block     @relation(fields: [blockId], references: [id])
+
+  @@index([blockNumber, transactionIndex], map: "block_transaction_idx")
+
+
+}
+
 model Block {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  blockNumber Int
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  number      Int         
+  hash        String       @unique
+  parentHash  String
+  difficulty  Float
+  gasLimit    Int
+  gasUsed     Int
+  timestamp   DateTime     
+  transactions Transaction[]
 }
