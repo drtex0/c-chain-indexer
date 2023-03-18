@@ -5,17 +5,16 @@ import { IndexerService } from './services/indexer.service';
 
 const BLOCK_MAX_INDEX_HISTORY = 10_000;
 
-
 export const run = async () => {
   const prisma = new PrismaClient();
   try {
     await prisma.$connect();
-      const indexerRepository = new IndexerRepository(prisma);
-  const indexerService = new IndexerService(indexerRepository);
+    const indexerRepository = new IndexerRepository(prisma);
+    const indexerService = new IndexerService(indexerRepository);
 
-  indexerService.processUpcomingBlocks();
+    indexerService.processUpcomingBlocks();
 
-  await indexerService.catchupMissedBlocks(BLOCK_MAX_INDEX_HISTORY);
+    await indexerService.catchupMissedBlocks(BLOCK_MAX_INDEX_HISTORY);
   } finally {
     await prisma.$disconnect();
   }

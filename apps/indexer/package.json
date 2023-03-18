@@ -6,13 +6,18 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "test": "jest",
     "format": "prettier --config ../../.prettierrc ./src --write",
     "prettier": "prettier --config ../../.prettierrc ./src --check"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.0",
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.15.1",
+    "jest": "^29.5.0",
+    "jest-mock-extended": "^3.0.3",
     "prettier": "^2.8.4",
+    "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1"
   },
   "dependencies": {
@@ -20,6 +25,7 @@
     "cci-database": "1.0.0",
     "cci-tsconfig": "1.0.0",
     "dotenv": "^16.0.3",
+    "jest-mock": "^29.5.0",
     "lodash": "^4.17.21",
     "mongodb": "^5.1.0",
     "promise-throttle-all": "^1.1.1",

@@ -46,7 +46,11 @@ export class IndexerService {
     const currentBlockNumber = await this.getLastMinedBlockNumber();
     const lastSavedBlockNumber = await this.indexerRepository.getLastInsertedBlockNumber();
 
-    const blockStart = lastSavedBlockNumber ?? currentBlockNumber - blockIndexRange;
+    let blockStart = lastSavedBlockNumber ?? currentBlockNumber - blockIndexRange;
+
+    if (blockStart < 0) {
+      blockStart = 1; // first minted block is 1
+    }
 
     const rangeLength = currentBlockNumber - blockStart + 1;
     const promises = Array.from(
@@ -59,7 +63,6 @@ export class IndexerService {
 
   protected async createBlockWithTransactions(blockNumber: number): Promise<BlockTransactionObject | undefined> {
     const block = await this.web3.eth.getBlock(blockNumber, true);
-
     try {
       const verifiedBlock = BlockDto.parse(block);
 
@@ -70,7 +73,7 @@ export class IndexerService {
       return block;
     } catch (err) {
       // TODO: need to handle prisma errors
-      console.log(JSON.stringify(block))
+      console.log(JSON.stringify(block));
       console.log('Error on insert', err);
     }
   }
