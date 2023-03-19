@@ -19,8 +19,8 @@ export class IndexerRepository {
   async createBlockAndTransaction(
     blockInput: BlockInput,
     transactionsInput: TransactionInputWithoutBlockId[],
-  ): Promise<void> {
-    await this.prismaClient.$transaction(async (client) => {
+  ): Promise<{ block: Block; createdTransactions: Transaction[] }> {
+    return this.prismaClient.$transaction(async (client) => {
       const block = await client.block.create({ data: blockInput });
 
       const createdTransactions = await Promise.all(

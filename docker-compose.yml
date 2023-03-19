@@ -28,6 +28,7 @@ services:
     environment:
       DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_REPLICA_PORT}/${MONGO_INITDB_DATABASE}?authSource=admin&directConnection=true
       RPC_ENDPOINT_URL: ${RPC_ENDPOINT_URL}
+      INDEXER_MAX_HISTORY: ${INDEXER_MAX_HISTORY}
     networks:
       - indexer_network
     depends_on:

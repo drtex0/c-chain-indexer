@@ -2,23 +2,15 @@ import { IndexerRepository } from '../repository/indexer.repository';
 import { IndexerService } from './indexer.service';
 
 import { mocked } from 'jest-mock';
-import Web3 from 'web3';
 
-import { BLOCK_INFO_MOCK } from '../../tests/mocks';
+import { PARSED_BLOCK_MOCK } from '../../tests/mocks';
 
-jest.mock('web3', () => {
-  return jest.fn().mockImplementation(() => ({
-    utils: Web3.utils,
-    eth: {
-      getBlockNumber: jest.fn().mockResolvedValue(42),
-      getBlock: jest.fn(),
-    },
-  }));
-});
+import * as JsonRpcModule from '../http';
+
+jest.mock('../http');
 jest.mock('../repository/indexer.repository.ts');
 
 const indexerRepositoryMock = mocked(IndexerRepository);
-const web3Mock = mocked(Web3);
 
 class TestIndexerService extends IndexerService {
   public createBlockWithTransactions(
@@ -26,13 +18,18 @@ class TestIndexerService extends IndexerService {
   ): ReturnType<IndexerService['createBlockWithTransactions']> {
     return super.createBlockWithTransactions(...args);
   }
+
+  public processCurrentBlock(
+    ...args: Parameters<IndexerService['processCurrentBlock']>
+  ): ReturnType<IndexerService['processCurrentBlock']> {
+    return super.processCurrentBlock(...args);
+  }
 }
 
 describe('IndexerService', () => {
   let indexerRepository: IndexerRepository;
-
+  const blockNumber = 1_000;
   beforeEach(() => {
-    process.env.RPC_ENDPOINT_URL = 'http://some-url';
     indexerRepository = new IndexerRepository(null as any);
   });
 
@@ -40,40 +37,44 @@ describe('IndexerService', () => {
     indexerRepositoryMock.mockReset();
   });
 
-  describe('#getLastMinedBlockNumber', () => {
-    it('returns the latest mined block', async () => {
-      const indexerService = new TestIndexerService(indexerRepository);
+  describe('processCurrentBlock', () => {
+    beforeAll(() => {
+      jest.spyOn(JsonRpcModule, 'getBlockWithTransactions').mockResolvedValue(PARSED_BLOCK_MOCK as any);
+      jest.spyOn(JsonRpcModule, 'getAddressBalance').mockResolvedValue(10);
+    });
 
-      const result = await indexerService.getLastMinedBlockNumber();
-      expect(result).toBe(42);
+    afterAll(() => {
+      jest.resetModules();
+    });
+
+    it('processeses the block', async () => {
+      const getBlockNumberSpy = jest.spyOn(JsonRpcModule, 'getBlockNumber').mockResolvedValue(blockNumber);
+      const createBlockMock = jest
+        .spyOn(IndexerRepository.prototype, 'createBlockAndTransaction')
+        .mockResolvedValue({ block: { number: blockNumber } } as any);
+
+      const indexerService = new TestIndexerService(indexerRepository as any);
+
+      await indexerService.processCurrentBlock();
+
+      expect(getBlockNumberSpy).toHaveBeenCalledTimes(1);
+      expect(createBlockMock).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('#createBlockWithTransactions', () => {
+  describe('createBlockWithTransactions', () => {
     it('creates the entries in the database', async () => {
-      const getLastInsertedBlockNumberMock = jest.fn().mockResolvedValue(10);
-      const getBlockMock = jest.fn().mockResolvedValue(BLOCK_INFO_MOCK);
       const createBlockAndTransactionMock = jest.fn().mockResolvedValue({});
 
       indexerRepositoryMock.mockImplementation((): any => ({
-        getLastInsertedBlockNumber: getLastInsertedBlockNumberMock,
         createBlockAndTransaction: createBlockAndTransactionMock,
       }));
-      web3Mock.mockImplementation((): any => ({
-        eth: {
-          getBlockNumber: jest.fn().mockResolvedValue(42),
-          getBlock: getBlockMock,
-          getBalance: jest.fn().mockResolvedValue('0x1'),
-        },
-      }));
-      // @ts-ignore
-      web3Mock.utils = { isAddress: () => true };
 
       const service = new TestIndexerService(indexerRepository as any);
 
       const result = await service.createBlockWithTransactions(10);
 
-      expect(result).toEqual(BLOCK_INFO_MOCK);
+      expect(result).toEqual({ number: blockNumber });
       expect(indexerRepositoryMock.mock.instances[0].createBlockAndTransaction).toHaveBeenCalled();
     });
   });
