@@ -8,7 +8,7 @@ import { isAddress } from 'web3-utils';
 export class TransactionsController {
   constructor(private readonly transactionService: TransactionsService) {}
 
-  @Get('/:address')
+  @Get('/infos/:address')
   public async getTransactionsForAddress(
     @Param('address') address: string,
     @Query('page', ParseIntPipe) page = 1,
@@ -48,6 +48,14 @@ export class TransactionsController {
     }
 
     const transactions = await this.transactionService.getTransactionsSortedByValue(parsedLimit);
+
+    return { data: transactions };
+  }
+
+  @Get('/largest-balances')
+  public async getLargestBalancesAddresses(): Promise<ApiDataOutput<{ address: string; balance: number }[]>> {
+    console.log('here');
+    const transactions = await this.transactionService.getLargestAddressBalances();
 
     return { data: transactions };
   }

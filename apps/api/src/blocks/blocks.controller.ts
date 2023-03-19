@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiDataOutput } from '@src/types';
 import { BlocksService } from './blocks.service';
 
@@ -6,6 +6,7 @@ import { BlocksService } from './blocks.service';
 export class BlocksController {
   constructor(private readonly blocksService: BlocksService) {}
 
+  @Get('/')
   async getTotalBlocks(): Promise<ApiDataOutput<{ count: number }>> {
     const totalBlocks = await this.blocksService.getTotalBlocks();
 

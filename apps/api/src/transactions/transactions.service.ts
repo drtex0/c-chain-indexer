@@ -57,4 +57,64 @@ export class TransactionsService {
 
     return transactions;
   }
+
+  async getLargestAddressBalances(): Promise<{ address: string; balance: number }[]> {
+    const addresses = await this.prismaService.$runCommandRaw({
+      aggregate: 'Transaction',
+      pipeline: [
+        {
+          $lookup: {
+            from: 'Block',
+            localField: 'blockId',
+            foreignField: '_id',
+            as: 'block',
+          },
+        },
+        { $unwind: '$block' },
+        {
+          $facet: {
+            fromAddresses: [
+              {
+                $group: {
+                  _id: '$from',
+                  balance: { $max: '$fromBalance' },
+                },
+              },
+            ],
+            toAddresses: [
+              {
+                $group: {
+                  _id: '$to',
+                  balance: { $max: '$toBalance' },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            allAddresses: {
+              $concatArrays: ['$fromAddresses', '$toAddresses'],
+            },
+          },
+        },
+        { $unwind: '$allAddresses' },
+        {
+          $group: {
+            _id: '$allAddresses._id',
+            balance: { $max: '$allAddresses.balance' },
+          },
+        },
+        { $sort: { balance: -1 } },
+        { $limit: 100 },
+      ],
+      cursor: {},
+    });
+
+    if (!addresses.cursor) {
+      return [];
+    }
+
+    return (addresses.cursor as any).firstBatch;
+  }
 }
