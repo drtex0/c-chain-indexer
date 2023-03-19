@@ -92,6 +92,24 @@ If its status is OK, you should have this answer on a /GET http://localhost:3000
 {"data":"ok"}
 ```
 
+Swagger :
+
+```
+http://localhost:3000/docs
+```
+
+### Endpoints :
+
+GET /transactions/infos/{address}
+
+GET /transactions/{address}/count
+
+GET /transactions
+
+GET /transactions/largest-balances
+
+GET /blocks
+
 ## Development
 
 Using Node 18 :
