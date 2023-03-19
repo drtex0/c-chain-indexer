@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 
 const mockPrisma = {
-  blocks: { count: () => Promise.resolve(1) },
+  block: { count: () => Promise.resolve(1) },
 };
 
 describe('AppController', () => {

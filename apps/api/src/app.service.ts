@@ -6,7 +6,7 @@ export class AppService {
   constructor(private prisma: PrismaService) {}
 
   async getBlocksCount(): Promise<any> {
-    const blocks = await this.prisma.blocks.count();
+    const blocks = await this.prisma.block.count();
     return { count: blocks };
   }
 }

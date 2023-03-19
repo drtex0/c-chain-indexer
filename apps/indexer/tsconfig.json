@@ -1,5 +1,5 @@
 {
   "extends": "cci-tsconfig/tsconfig.base.json",
-  "compilerOptions": { "outDir": "./dist" },
-  "include": ["src/index.ts"]
+  "compilerOptions": { "outDir": "./dist",  "strict": true},
+  "include": ["src/**.ts"]
 }
