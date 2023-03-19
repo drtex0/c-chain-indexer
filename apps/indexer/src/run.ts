@@ -1,12 +1,11 @@
 import { PrismaClient } from 'cci-database';
-import { isNumber } from 'lodash';
 
 import { IndexerRepository } from './repository/indexer.repository';
 import { IndexerService } from './services/indexer.service';
 import { readFromEnv } from './utils/env';
 
 function assertIsInteger(input: unknown): asserts input is number {
-  if (!isNumber(input)) {
+  if (!isFinite(Number(input))) {
     throw new Error(`${input} is not a numeric value`);
   }
 }
