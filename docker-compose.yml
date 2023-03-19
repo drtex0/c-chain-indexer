@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: ./apps/indexer/Dockerfile
     environment:
-      DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_REPLICA_PORT}/${MONGO_INITDB_DATABASE}?authSource=admin
+      DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_REPLICA_PORT}/${MONGO_INITDB_DATABASE}?authSource=admin&directConnection=true
       RPC_ENDPOINT_URL: ${RPC_ENDPOINT_URL}
     networks:
       - indexer_network
@@ -38,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/api/Dockerfile
+    environment:
+      DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:${MONGO_REPLICA_PORT}/${MONGO_INITDB_DATABASE}?authSource=admin&directConnection=true
     ports:
       - '3000:3000'
     networks:

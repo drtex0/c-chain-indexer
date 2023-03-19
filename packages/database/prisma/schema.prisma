@@ -18,7 +18,9 @@ model Transaction {
   blockNumber   Int       
   transactionIndex Int   
   from          String
+  fromBalance   Float
   to            String?
+  toBalance   Float?
   value         String
   computedValue Float
   gas           Int

@@ -15,6 +15,11 @@ import { TransactionDto } from '../dto/transaction.dto';
 
 const MAX_CONCURRENCY = 50;
 
+type TransactionDtoWithBalance = TransactionDto & {
+  fromBalance: string;
+  toBalance: string | null;
+};
+
 export class IndexerService {
   private web3: Web3;
 
@@ -66,9 +71,18 @@ export class IndexerService {
     try {
       const verifiedBlock = BlockDto.parse(block);
 
+      const transactionsWithBalances = [];
+
+      for (const transaction of verifiedBlock.transactions) {
+        const fromBalance = await this.web3.eth.getBalance(transaction.from);
+        const toBalance = transaction.to ? await this.web3.eth.getBalance(transaction.to) : null;
+
+        transactionsWithBalances.push({ ...transaction, fromBalance, toBalance });
+      }
+
       await this.indexerRepository.createBlockAndTransaction(
         this.mapBlockToPrismaBlock(verifiedBlock),
-        verifiedBlock.transactions.map(this.mapTransactionToPrismaTransaction),
+        transactionsWithBalances.map(this.mapTransactionToPrismaTransaction),
       );
       return block;
     } catch (err) {
@@ -87,12 +101,18 @@ export class IndexerService {
     };
   }
 
-  protected mapTransactionToPrismaTransaction(transaction: TransactionDto): Omit<Transaction, 'id' | 'blockId'> {
+  protected mapTransactionToPrismaTransaction(
+    transaction: TransactionDtoWithBalance,
+  ): Omit<Transaction, 'id' | 'blockId'> {
     const computedValue = Number(fromWei(transaction.value, 'ether'));
+    const fromBalance = Number(fromWei(transaction.fromBalance, 'ether'));
+    const toBalance =transaction.toBalance ?  Number(fromWei(transaction.toBalance, 'ether')) : null;
 
     return {
       ...pick(transaction, ['blockNumber', 'from', 'to', 'gas', 'gasPrice', 'hash', 'transactionIndex', 'value']),
       computedValue,
+      fromBalance,
+      toBalance,
     };
   }
 }

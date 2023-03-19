@@ -63,6 +63,7 @@ describe('IndexerService', () => {
         eth: {
           getBlockNumber: jest.fn().mockResolvedValue(42),
           getBlock: getBlockMock,
+          getBalance: jest.fn().mockResolvedValue('0x1'),
         },
       }));
       // @ts-ignore
