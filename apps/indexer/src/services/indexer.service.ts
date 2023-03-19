@@ -33,12 +33,12 @@ export class IndexerService {
 
     const lastMinedBlock = await getBlockNumber();
 
-    console.info('------processing', lastMinedBlock)
-    
+    console.info('------processing', lastMinedBlock);
+
     if (previousSavedBlockNumber !== lastMinedBlock) {
       const insertedBlock = await this.createBlockWithTransactions(lastMinedBlock);
-      
-      console.info('-------------inserting', lastMinedBlock)
+
+      console.info('-------------inserting', lastMinedBlock);
       if (insertedBlock) {
         previousSavedBlockNumber = insertedBlock.number;
       }
