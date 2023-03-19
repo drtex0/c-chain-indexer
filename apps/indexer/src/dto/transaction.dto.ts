@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import web3 from 'web3';
+import { isAddress, hexToNumber } from 'web3-utils';
 
 const Address = z.string().refine((value) => {
   return (
-    web3.utils.isAddress(value),
+    isAddress(value),
     {
       message: 'Invalid Address',
     }
@@ -12,16 +12,17 @@ const Address = z.string().refine((value) => {
 
 export const TransactionDto = z.object({
   blockHash: z.string(),
-  blockNumber: z.number(),
-  chainId: z.string(),
+  blockNumber: z.string().transform(hexToNumber),
+  chainId: z.string().transform(hexToNumber),
   from: Address,
-  gas: z.number(),
+  gas: z.string().transform(hexToNumber),
   gasPrice: z.coerce.number(),
   hash: z.string(),
   input: z.string(),
-  nonce: z.number(),
+  nonce: z.string().transform(hexToNumber),
   to: Address.nullable(),
-  transactionIndex: z.number().min(0),
+  transactionIndex: z.string().transform(hexToNumber),
+  type: z.string().transform(hexToNumber),
   value: z.string(),
 });
 

@@ -1,54 +1,52 @@
-import Web3 from 'web3';
 import { fromWei } from 'web3-utils';
 
-import { BlockTransactionObject } from 'web3-eth';
 import { throttleAll } from 'promise-throttle-all';
 import { pick } from 'lodash';
 
 import type { Block, Transaction } from 'cci-database';
 
 import { IndexerRepository } from '../repository/indexer.repository';
-import { readFromEnv } from '../utils/env';
 
 import { BlockDto } from '../dto/block.dto';
 import { TransactionDto } from '../dto/transaction.dto';
+import { getAddressBalance, getBlockNumber, getBlockWithTransactions } from '../http';
 
-const MAX_CONCURRENCY = 50;
+const MAX_CONCURRENCY = 30;
 
 type TransactionDtoWithBalance = TransactionDto & {
-  fromBalance: string;
-  toBalance: string | null;
+  fromBalance: number;
+  toBalance: number | null;
 };
 
 export class IndexerService {
-  private web3: Web3;
+  public constructor(private readonly indexerRepository: IndexerRepository) {}
 
-  public constructor(private readonly indexerRepository: IndexerRepository) {
-    this.web3 = new Web3(readFromEnv('RPC_ENDPOINT_URL'));
+  async processUpcomingBlocks(): Promise<void> {
+    while (true) {
+      await this.processCurrentBlock();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
   }
 
-  async getLastMinedBlockNumber(): Promise<number> {
-    return this.web3.eth.getBlockNumber();
-  }
-
-  processUpcomingBlocks(): void {
+  protected async processCurrentBlock(): Promise<void> {
     let previousSavedBlockNumber: number | undefined;
 
-    setInterval(async () => {
-      const lastMinedBlock = await this.getLastMinedBlockNumber();
+    const lastMinedBlock = await getBlockNumber();
 
-      if (previousSavedBlockNumber !== lastMinedBlock) {
-        const insertedBlock = await this.createBlockWithTransactions(lastMinedBlock);
-
-        if (insertedBlock) {
-          previousSavedBlockNumber = insertedBlock.number;
-        }
+    console.info('------processing', lastMinedBlock)
+    
+    if (previousSavedBlockNumber !== lastMinedBlock) {
+      const insertedBlock = await this.createBlockWithTransactions(lastMinedBlock);
+      
+      console.info('-------------inserting', lastMinedBlock)
+      if (insertedBlock) {
+        previousSavedBlockNumber = insertedBlock.number;
       }
-    }, 100);
+    }
   }
 
   async catchupMissedBlocks(blockIndexRange: number): Promise<void> {
-    const currentBlockNumber = await this.getLastMinedBlockNumber();
+    const currentBlockNumber = await getBlockNumber();
     const lastSavedBlockNumber = await this.indexerRepository.getLastInsertedBlockNumber();
 
     let blockStart = lastSavedBlockNumber ?? currentBlockNumber - blockIndexRange;
@@ -66,28 +64,28 @@ export class IndexerService {
     await throttleAll(MAX_CONCURRENCY, promises);
   }
 
-  protected async createBlockWithTransactions(blockNumber: number): Promise<BlockTransactionObject | undefined> {
-    const block = await this.web3.eth.getBlock(blockNumber, true);
+  protected async createBlockWithTransactions(blockNumber: number): Promise<Block | undefined> {
     try {
-      const verifiedBlock = BlockDto.parse(block);
+      const block = await getBlockWithTransactions(blockNumber);
 
       const transactionsWithBalances = [];
 
-      for (const transaction of verifiedBlock.transactions) {
-        const fromBalance = await this.web3.eth.getBalance(transaction.from);
-        const toBalance = transaction.to ? await this.web3.eth.getBalance(transaction.to) : null;
+      for (const transaction of block.transactions) {
+        const fromBalance = await getAddressBalance(transaction.from, block.number);
+        const toBalance = transaction.to ? await getAddressBalance(transaction.to, block.number) : null;
 
         transactionsWithBalances.push({ ...transaction, fromBalance, toBalance });
       }
 
-      await this.indexerRepository.createBlockAndTransaction(
-        this.mapBlockToPrismaBlock(verifiedBlock),
+      const result = await this.indexerRepository.createBlockAndTransaction(
+        this.mapBlockToPrismaBlock(block),
         transactionsWithBalances.map(this.mapTransactionToPrismaTransaction),
       );
-      return block;
+
+      console.info('Created block', result.block.number);
+      return result.block;
     } catch (err) {
-      // TODO: need to handle prisma errors
-      console.log(JSON.stringify(block));
+      // Don't block prisma errors
       console.log('Error on insert', err);
     }
   }
@@ -105,14 +103,21 @@ export class IndexerService {
     transaction: TransactionDtoWithBalance,
   ): Omit<Transaction, 'id' | 'blockId'> {
     const computedValue = Number(fromWei(transaction.value, 'ether'));
-    const fromBalance = Number(fromWei(transaction.fromBalance, 'ether'));
-    const toBalance =transaction.toBalance ?  Number(fromWei(transaction.toBalance, 'ether')) : null;
 
     return {
-      ...pick(transaction, ['blockNumber', 'from', 'to', 'gas', 'gasPrice', 'hash', 'transactionIndex', 'value']),
+      ...pick(transaction, [
+        'blockNumber',
+        'from',
+        'to',
+        'gas',
+        'gasPrice',
+        'hash',
+        'transactionIndex',
+        'value',
+        'fromBalance',
+        'toBalance',
+      ]),
       computedValue,
-      fromBalance,
-      toBalance,
     };
   }
 }
